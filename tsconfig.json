@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "outDir": "build",
+    "paths": {
+      "*": [
+        "declarations/*"
+      ]
+    },
+    "baseUrl": "."
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "build",
+    "node_modules"
+  ]
+}

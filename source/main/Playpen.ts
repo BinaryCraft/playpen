@@ -1,46 +1,24 @@
 import {existsAsync, mkdirAsync, removeAsync} from "fs-extra-promise";
-import {ProjectMock} from "./ProjectMock";
-import {TestingData} from "./TestingData";
+import Process = NodeJS.Process;
 
-export {Sandbox};
+export {Playpen};
 
-class Sandbox {
+class Playpen {
     public readonly path: string;
     public readonly parentDirectoryPath: string;
     public readonly realProcessExit = process.exit;
 
-    private readonly testingData: TestingData;
-    private readonly projectMock: ProjectMock;
     private fakeExitListener: () => void;
     private exitListener: () => void;
     private oldProcessOn: any;
 
-    constructor(testingData?: TestingData, projectMock?: ProjectMock) {
+    constructor() {
         this.parentDirectoryPath = process.cwd();
-        this.path = `${process.cwd()}/.sandbox`;
-
-        if (testingData) {
-            this.testingData = testingData;
-            testingData.path = this.path;
-        }
-
-        if (projectMock) {
-            this.projectMock = projectMock;
-            projectMock.parentDir = this.path;
-        }
+        this.path = `${process.cwd()}/.playpen`;
     }
 
     public async setup(): Promise<void> {
-        await this.createSandboxEnvironment();
-
-        if (this.testingData) {
-            await this.testingData.getTestingData();
-            await this.testingData.copyInitialTypescriptFilesToProject();
-        }
-
-        if (this.projectMock) {
-            await this.projectMock.setup();
-        }
+        await this.createEnvironment();
     }
 
     public async tearDown(): Promise<void> {
@@ -52,11 +30,12 @@ class Sandbox {
     public mockProcessEventHandler(): void {
         this.oldProcessOn = process.on;
 
-        process.on = (event, func: () => void) => {
-            if (event === "exit") {
+        process.on = (eventName, func: () => void): Process => {
+            if (eventName === "exit") {
                 this.fakeExitListener = func;
                 process.on = this.oldProcessOn;
             }
+            return process;
         };
     }
 
@@ -84,7 +63,7 @@ class Sandbox {
         process.on("exit", this.exitListener);
     }
 
-    private async createSandboxEnvironment(): Promise<void> {
+    private async createEnvironment(): Promise<void> {
         await mkdirAsync(this.path);
         process.chdir(this.path);
         this.registerCleanUpTasks();
